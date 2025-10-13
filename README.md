@@ -35,7 +35,7 @@ Node.js (v16 or higher)
 npm or yarn
 Installation
 Clone the repository:
-git clone https://github.com/yourusername/MHacks-main.git
+git clone https://github.com/Shane-D-code/FinCoach-AI-main.git
 cd MHacks-main
 
 Install dependencies:
