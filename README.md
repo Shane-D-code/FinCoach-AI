@@ -1,4 +1,4 @@
-MHacks: Personal Finance & Lifestyle Dashboard
+FinCoach-AI: Personal Finance & Lifestyle Dashboard
 MHacks is a modern, interactive web application designed to help users manage their personal finances, set and track goals, compare lifestyle expenses, and engage with a supportive community. Built with React, Vite, and TypeScript, MHacks offers a seamless experience for budgeting, saving, investing, and making smarter lifestyle choices.
 
 Features
