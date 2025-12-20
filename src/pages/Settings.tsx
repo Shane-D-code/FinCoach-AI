@@ -292,6 +292,16 @@ export default function Settings() {
               <strong>Masked Data:</strong> Sensitive account numbers are displayed as ****1234 for your security
             </p>
           </div>
+          <button
+            onClick={() => {
+              localStorage.clear();
+              window.location.href = "/register";
+            }}
+            className="w-full py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+          >
+            <Shield size={20} />
+            <span>Reset Onboarding</span>
+          </button>
         </div>
       </motion.div>
     </div>
