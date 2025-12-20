@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   LayoutDashboard,
@@ -32,8 +32,19 @@ const navItems = [
 export default function Layout() {
   const { theme, toggleTheme, user, isOffline } = useApp();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationCount] = useState(3);
+
+  useEffect(() => {
+    const userProfile = localStorage.getItem("userProfile");
+    const yearlySpend = localStorage.getItem("yearlySpend");
+    const protectedRoutes = ['/dashboard', '/budget', '/goals', '/lifestyle', '/chatbot', '/engagement', '/settings'];
+
+    if (protectedRoutes.includes(location.pathname) && (!userProfile || !yearlySpend)) {
+      navigate("/register", { replace: true });
+    }
+  }, [navigate, location.pathname]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Doughnut, Line } from 'react-chartjs-2';
 import {
@@ -12,16 +12,162 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { useApp } from '../context/AppContext';
-import { categoryData, cashFlowData, savingsGoal, alerts } from '../data/mockData';
 import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, Award, Plus, X } from 'lucide-react';
+import DailySpend from '../components/DailySpend';
 
 ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
+interface DailySpendEntry {
+  date: string;
+  amount: number;
+  category: string;
+}
+
+interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+}
+
 export default function Dashboard() {
-  const { user } = useApp();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [dailySpends, setDailySpends] = useState<DailySpendEntry[]>([]);
+  const [yearlySpend, setYearlySpend] = useState<number>(0);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [transactionForm, setTransactionForm] = useState({ amount: '', category: '', date: '' });
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('userProfile');
+    if (storedUser) {
+      setUserProfile(JSON.parse(storedUser));
+    }
+    const storedDaily = localStorage.getItem('dailySpends');
+    if (storedDaily) {
+      setDailySpends(JSON.parse(storedDaily));
+    } else {
+      // Add mock data for demonstration
+      const mockData: DailySpendEntry[] = [
+        { date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 1500, category: 'Food' },
+        { date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 800, category: 'Transport' },
+        { date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 2000, category: 'Shopping' },
+        { date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 1200, category: 'Entertainment' },
+        { date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 600, category: 'Bills & Utilities' },
+        { date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 900, category: 'Healthcare' },
+      ];
+      setDailySpends(mockData);
+      localStorage.setItem('dailySpends', JSON.stringify(mockData));
+    }
+    const storedYearly = localStorage.getItem('yearlySpend');
+    if (storedYearly) {
+      setYearlySpend(parseFloat(storedYearly));
+    } else {
+      setYearlySpend(600000); // Mock yearly spend
+      localStorage.setItem('yearlySpend', '600000');
+    }
+  }, []);
+
+  const totalSpent = useMemo(() => dailySpends.reduce((sum, spend) => sum + spend.amount, 0), [dailySpends]);
+  const currentBalance = yearlySpend - totalSpent;
+  const monthlyIncome = yearlySpend / 12;
+
+  const savingsStreak = useMemo(() => {
+    if (dailySpends.length === 0) return 0;
+    const sortedSpends = [...dailySpends].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const lastSpendDate = new Date(sortedSpends[0].date);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - lastSpendDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays - 1;
+  }, [dailySpends]);
+
+  const savingsGoal = { progress: yearlySpend > 0 ? Math.round((currentBalance / yearlySpend) * 100) : 0 };
+
+  const categoryData = useMemo(() => {
+    const breakdown: { [key: string]: number } = {};
+    dailySpends.forEach(spend => {
+      breakdown[spend.category] = (breakdown[spend.category] || 0) + spend.amount;
+    });
+    return breakdown;
+  }, [dailySpends]);
+
+  // Generate stable mock variations for past months
+  const mockVariations = useMemo(() => {
+    return Array.from({ length: 5 }, () => ({
+      incomeVariation: (Math.random() - 0.5) * 0.3, // ±15%
+      expenseRatio: 0.6 + Math.random() * 0.4 // 60-100% of income
+    }));
+  }, []); // Empty dependency array to generate once
+
+  const cashFlowData = useMemo(() => {
+    const months: string[] = [];
+    const incomes: number[] = [];
+    const expenses: number[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = date.toLocaleString('default', { month: 'short' });
+      months.push(monthName);
+
+      // Add some variation to past months for curved lines
+      let income = monthlyIncome;
+      let expense = 0;
+
+      if (i > 0) { // Past months - add mock variation
+        const variationIndex = 5 - i; // 0 for 5 months ago, 1 for 4 months ago, etc.
+        const variation = mockVariations[variationIndex];
+        income = monthlyIncome * (1 + variation.incomeVariation);
+
+        // Mock expenses for past months if no real data
+        const realMonthSpend = dailySpends
+          .filter(spend => {
+            const spendDate = new Date(spend.date);
+            return spendDate.getMonth() === date.getMonth() && spendDate.getFullYear() === date.getFullYear();
+          })
+          .reduce((sum, spend) => sum + spend.amount, 0);
+
+        if (realMonthSpend === 0) {
+          // Mock expenses for past months
+          expense = monthlyIncome * variation.expenseRatio;
+        } else {
+          expense = realMonthSpend;
+        }
+      } else {
+        // Current month - use real data
+        income = monthlyIncome;
+        expense = dailySpends
+          .filter(spend => {
+            const spendDate = new Date(spend.date);
+            return spendDate.getMonth() === date.getMonth() && spendDate.getFullYear() === date.getFullYear();
+          })
+          .reduce((sum, spend) => sum + spend.amount, 0);
+      }
+
+      incomes.push(income);
+      expenses.push(expense);
+    }
+    return months.map((month, index) => ({
+      month,
+      income: incomes[index],
+      expenses: expenses[index]
+    }));
+  }, [dailySpends, monthlyIncome, mockVariations]);
+
+  const alerts: any[] = [];
+
+  const user = {
+    name: userProfile?.name || 'User',
+    currentBalance,
+    monthlyIncome,
+    streak: savingsStreak,
+    badges: (() => {
+      const badges = ['First Steps'];
+      if (savingsStreak > 0) badges.push('Budget Master');
+      if (totalSpent > 1000) badges.push('Spending Champion');
+      if (currentBalance > yearlySpend * 0.5) badges.push('Savings Guru');
+      if (dailySpends.length > 10) badges.push('Consistent Tracker');
+      return badges;
+    })()
+  };
 
   const expenseData = {
     labels: Object.keys(categoryData),
@@ -69,9 +215,19 @@ export default function Dashboard() {
 
   const handleAddTransaction = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Adding transaction:', transactionForm);
-    setShowAddTransaction(false);
-    setTransactionForm({ amount: '', category: '', date: '' });
+    const amount = parseFloat(transactionForm.amount);
+    if (amount > 0 && transactionForm.category && transactionForm.date) {
+      const newEntry: DailySpendEntry = {
+        date: transactionForm.date,
+        amount,
+        category: transactionForm.category
+      };
+      const updatedSpends = [...dailySpends, newEntry];
+      setDailySpends(updatedSpends);
+      localStorage.setItem('dailySpends', JSON.stringify(updatedSpends));
+      setShowAddTransaction(false);
+      setTransactionForm({ amount: '', category: '', date: '' });
+    }
   };
 
   return (
@@ -246,6 +402,14 @@ export default function Dashboard() {
           ))}
         </div>
       </motion.div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg mb-8">
+        <DailySpend forceShow={true} onSpendAdded={(newEntry) => {
+          const updatedSpends = [...dailySpends, newEntry];
+          setDailySpends(updatedSpends);
+          localStorage.setItem('dailySpends', JSON.stringify(updatedSpends));
+        }} />
+      </div>
 
       {showAddTransaction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
