@@ -256,8 +256,27 @@ export default function Dashboard() {
             </div>
             <TrendingUp size={20} className="text-blue-200" />
           </div>
-          <p className="text-blue-100 text-sm mb-1">Current Balance</p>
-          <h3 className="text-3xl font-bold">₹{user.currentBalance.toLocaleString()}</h3>
+          <p className="text-blue-100 text-sm mb-1">
+            {currentBalance >= 0 ? 'Remaining Budget' : 'Over Budget'}
+          </p>
+          <div className="flex items-end gap-2">
+            <h3 className="text-3xl font-bold">
+              {currentBalance < 0 ? '-' : ''}₹{Math.abs(user.currentBalance).toLocaleString()}
+            </h3>
+            <button
+              onClick={() => {
+                const newBudget = prompt('Update Yearly Budget:', yearlySpend.toString());
+                if (newBudget && !isNaN(parseFloat(newBudget))) {
+                  const val = parseFloat(newBudget);
+                  setYearlySpend(val);
+                  localStorage.setItem('yearlySpend', val.toString());
+                }
+              }}
+              className="text-xs bg-white/20 px-2 py-1 rounded hover:bg-white/30 transition-colors mb-1"
+            >
+              Edit
+            </button>
+          </div>
         </motion.div>
 
         <motion.div

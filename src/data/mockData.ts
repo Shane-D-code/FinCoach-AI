@@ -87,16 +87,7 @@ export const deals = [
   { id: 3, store: 'Target', discount: '15% off household items', location: 'Westside Mall', distance: '2.3 mi' }
 ];
 
-export const chatbotResponses: Record<string, string> = {
-  'hello': 'Hi Alex! How can I help you with your finances today?',
-  'hi': 'Hello! Ready to optimize your budget?',
-  'budget': 'Based on your spending, I recommend allocating: 50% necessities, 30% wants, 20% savings. Want to adjust your budget?',
-  'save': 'Great question! Try saving ₹12,450 weekly. Small steps lead to big results.',
-  'invest': 'With your medium risk profile, consider 60% stocks, 30% bonds, 10% cash. Want specific recommendations?',
-  'debt': 'You have ₹1,03,750 in debt. I recommend the avalanche method - pay the credit card first (18% interest). Pay ₹16,600 extra monthly to clear it in 6 months.',
-  'what if i spend ₹8,300 extra': 'Your savings would drop by 5%. Try cutting dining expenses by 10% to compensate.',
-  'default': 'I can help with budgeting, saving, investing, and debt management. What would you like to know?'
-};
+
 
 export const leaderboard = [
   { rank: 1, name: 'You (Alex)', streak: 7, savings: 2000 },

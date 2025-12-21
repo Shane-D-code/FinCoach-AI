@@ -1,17 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authApi } from '../services/api';
 
 export default function Register() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: ''
+    password: '',
+    confirmPassword: ''
   });
   const [errors, setErrors] = useState({
     name: '',
     email: '',
-    phone: ''
+    password: '',
+    confirmPassword: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
   const validateName = (name: string) => {
@@ -27,23 +32,57 @@ export default function Register() {
     return '';
   };
 
-  const validatePhone = (phone: string) => {
-    const phoneRegex = /^\d{10}$/;
-    if (!phone.trim()) return 'Phone number is required';
-    if (!phoneRegex.test(phone)) return 'Phone number must be exactly 10 digits';
+  const validatePassword = (password: string) => {
+    if (!password.trim()) return 'Password is required';
+    if (password.length < 6) return 'Password must be at least 6 characters';
     return '';
   };
 
-  const isFormValid = !errors.name && !errors.email && !errors.phone &&
-                     formData.name && formData.email && formData.phone;
+  const validateConfirmPassword = (confirmPassword: string) => {
+    if (!confirmPassword.trim()) return 'Please confirm your password';
+    if (confirmPassword !== formData.password) return 'Passwords do not match';
+    return '';
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isFormValid = !errors.name && !errors.email && !errors.password && !errors.confirmPassword &&
+                     formData.name && formData.email && formData.password && formData.confirmPassword;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isFormValid) {
-      // Save to localStorage
-      localStorage.setItem('userProfile', JSON.stringify(formData));
-      // Navigate to OTP
-      navigate('/otp');
+    setMessage('');
+    
+    if (!isFormValid) {
+      setMessage('Please fix the errors above');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await authApi.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (response.success) {
+        // Store email for OTP verification
+        localStorage.setItem('pendingUserEmail', formData.email);
+        setMessage('Registration successful! Please check your email for the OTP.');
+        setTimeout(() => {
+          navigate('/verify-otp');
+        }, 2000);
+      } else {
+        setMessage(response.message || 'Registration failed. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      if (error.response?.data?.message) {
+        setMessage(error.response.data.message);
+      } else {
+        setMessage('Registration failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -53,13 +92,38 @@ export default function Register() {
       ...formData,
       [name]: value
     });
+
+    // Validate field
+    if (name === 'name') {
+      setErrors({
+        ...errors,
+        name: validateName(value)
+      });
+    } else if (name === 'email') {
+      setErrors({
+        ...errors,
+        email: validateEmail(value)
+      });
+    } else if (name === 'password') {
+      setErrors({
+        ...errors,
+        password: validatePassword(value),
+        confirmPassword: validateConfirmPassword(errors.confirmPassword)
+      });
+    } else if (name === 'confirmPassword') {
+      setErrors({
+        ...errors,
+        confirmPassword: validateConfirmPassword(value)
+      });
+    }
   };
 
   useEffect(() => {
     setErrors({
       name: validateName(formData.name),
       email: validateEmail(formData.email),
-      phone: validatePhone(formData.phone)
+      password: validatePassword(formData.password),
+      confirmPassword: validateConfirmPassword(formData.confirmPassword)
     });
   }, [formData]);
 
@@ -77,9 +141,11 @@ export default function Register() {
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              placeholder="Enter your full name"
             />
             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
             <input
@@ -89,33 +155,61 @@ export default function Register() {
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              placeholder="Enter your email"
             />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
+          
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
             <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
+              type="password"
+              name="password"
+              value={formData.password}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              placeholder="Enter your password (min 6 characters)"
             />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
           </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              placeholder="Confirm your password"
+            />
+            {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+          </div>
+          
           <button
             type="submit"
-            disabled={!isFormValid}
+            disabled={!isFormValid || isLoading}
             className={`w-full py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              isFormValid
+              isFormValid && !isLoading
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-400 text-gray-200 cursor-not-allowed'
             }`}
           >
-            Continue
+            {isLoading ? 'Registering...' : 'Register'}
           </button>
         </form>
+        
+        {message && (
+          <p className={`mt-4 text-center ${
+            message.includes('successful') 
+              ? 'text-green-600' 
+              : 'text-red-600'
+          }`}>
+            {message}
+          </p>
+        )}
       </div>
     </div>
   );
