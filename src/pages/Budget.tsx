@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
 import { TrendingUp, DollarSign, PieChart, Calculator } from 'lucide-react';
+import { mlApi } from '../services/api';
+import { userData } from '../data/mockData'; // In a real app, this would come from a Context or API
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
@@ -10,25 +12,83 @@ export default function Budget() {
   const [windfallAmount, setWindfallAmount] = useState('');
   const [scenarioAmount, setScenarioAmount] = useState('');
   const [budgetGoal, setBudgetGoal] = useState(2500);
+  const [simulationResult, setSimulationResult] = useState<any>(null);
 
-  const forecastData = {
-    labels: ['Current', 'Next Month (Predicted)'],
+  /* 1. State for forecast result */
+  const [forecastResult, setForecastResult] = useState<any>(null);
+
+  /* 2. Fetch forecast on mount */
+  useEffect(() => {
+    const fetchForecast = async () => {
+      try {
+        const res = await mlApi.forecastExpenses({
+          monthlyIncome: userData.monthlyIncome,
+          currentExpenses: 2400, // Estimated from mockData
+          months: 3
+        });
+        setForecastResult(res);
+      } catch (e) {
+        console.error("Forecast failed", e);
+      }
+    };
+    fetchForecast();
+  }, []);
+
+  /* 3. Dynamic forecast data for the chart */
+  const forecastData = forecastResult ? {
+    labels: forecastResult.forecasts.map((f: any) => f.month),
     datasets: [
       {
-        label: 'Expenses',
-        data: [2200, 2530],
-        backgroundColor: ['#3B82F6', '#EF4444']
+        label: 'Predicted Expenses',
+        data: forecastResult.forecasts.map((f: any) => f.predicted_expense),
+        backgroundColor: forecastResult.forecasts.map((_: any, i: number) => i === 0 ? '#3B82F6' : '#EF4444')
       }
     ]
+  } : {
+    // Fallback/Loading state
+    labels: ['Loading...'],
+    datasets: [{ label: 'Loading', data: [0], backgroundColor: ['#ccc'] }]
   };
 
-  const scenarioData = scenarioAmount ? {
+  /* ...Existing calculation logic... */
+  const calculateScenario = async (amount: string) => {
+    if (!amount) {
+      setSimulationResult(null);
+      return;
+    }
+    try {
+      const val = parseFloat(amount);
+      if (isNaN(val)) return;
+
+      // Call ML API
+      const res = await mlApi.simulatePurchase({
+        currentBalance: userData.currentBalance,
+        monthlyIncome: userData.monthlyIncome,
+        monthlyExpenses: 2400,
+        purchaseAmount: val
+      });
+      setSimulationResult(res);
+
+    } catch (e) {
+      console.error("Simulation failed", e);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      calculateScenario(scenarioAmount);
+    }, 500); // Debounce
+    return () => clearTimeout(timer);
+  }, [scenarioAmount]);
+
+
+  const scenarioData = scenarioAmount && simulationResult ? {
     labels: ['Before', 'After Purchase'],
     datasets: [
       {
-        label: 'Savings',
-        data: [2000, Math.max(0, 2000 - parseFloat(scenarioAmount))],
-        backgroundColor: ['#10B981', '#F59E0B']
+        label: 'Balance',
+        data: [userData.currentBalance, simulationResult.new_balance],
+        backgroundColor: ['#10B981', simulationResult.new_balance < 0 ? '#EF4444' : '#F59E0B']
       }
     ]
   } : null;
@@ -68,11 +128,20 @@ export default function Budget() {
             <h3 className="text-xl font-bold text-gray-900 dark:text-white">Expense Forecasting</h3>
           </div>
           <div className="mb-6">
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-4 rounded-lg mb-4">
-              <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-                <strong>Prediction:</strong> Your expenses may increase by 15% next month due to upcoming seasonal changes and historical patterns.
-              </p>
-            </div>
+            {forecastResult ? (
+              <div className={`p-4 rounded-lg mb-4 border-l-4 ${forecastResult.trend === 'increasing' ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-800 dark:text-red-200' :
+                  forecastResult.trend === 'decreasing' ? 'bg-green-50 dark:bg-green-900/20 border-green-500 text-green-800 dark:text-green-200' :
+                    'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-800 dark:text-blue-200'
+                }`}>
+                <p className="text-sm">
+                  <strong>Trend: {forecastResult.trend.toUpperCase()}</strong>. {forecastResult.recommendations?.[0]}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mb-4 animate-pulse">
+                <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4"></div>
+              </div>
+            )}
           </div>
           <div className="h-64">
             <Bar
@@ -243,10 +312,24 @@ export default function Budget() {
                     }}
                   />
                 </div>
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border-l-4 border-yellow-500">
-                  <p className="text-yellow-800 dark:text-yellow-200">
-                    <strong>Impact:</strong> Your savings would decrease by{' '}
-                    {((parseFloat(scenarioAmount) / 2000) * 100).toFixed(1)}%. Consider waiting or finding alternatives.
+
+                {simulationResult && (
+                  <div className={`rounded-lg p-4 border-l-4 ${simulationResult.risk_level === 'CRITICAL' ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-800 dark:text-red-200' :
+                    simulationResult.risk_level === 'HIGH' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-500 text-orange-800 dark:text-orange-200' :
+                      simulationResult.risk_level === 'MEDIUM' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500 text-yellow-800 dark:text-yellow-200' :
+                        'bg-green-50 dark:bg-green-900/20 border-green-500 text-green-800 dark:text-green-200'
+                    }`}>
+                    <p className="font-bold mb-1">Risk Level: {simulationResult.risk_level}</p>
+                    <p className="text-sm mb-2">{simulationResult.advice}</p>
+                    {simulationResult.recovery_months > 0 && (
+                      <p className="text-xs italic">Estimated recovery time: {simulationResult.recovery_months} months</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border-l-4 border-blue-500">
+                  <p className="text-blue-800 dark:text-blue-200 text-sm">
+                    <strong>ML Insight:</strong> Impact calculated based on your real-time balance of ₹{userData.currentBalance}.
                   </p>
                 </div>
               </motion.div>

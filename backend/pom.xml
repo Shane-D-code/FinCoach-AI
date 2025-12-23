@@ -101,12 +101,8 @@
         </dependency>
 
         <!-- Development Tools -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
+        <!-- Development Tools dependency removed to fix restart classloader issues -->
+
 
         <!-- Test Dependencies -->
         <dependency>

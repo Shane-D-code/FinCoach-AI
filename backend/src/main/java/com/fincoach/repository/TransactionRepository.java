@@ -15,4 +15,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT t FROM Transaction t WHERE t.user = :user AND t.date BETWEEN :startDate AND :endDate")
     List<Transaction> findByUserAndMonth(@Param("user") User user, @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
+
+    List<Transaction> findByUserAndDateAfter(User user, LocalDate date);
 }

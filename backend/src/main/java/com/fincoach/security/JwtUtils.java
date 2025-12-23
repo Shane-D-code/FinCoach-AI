@@ -13,11 +13,11 @@ import java.util.Date;
 @Component
 public class JwtUtils {
 
-    @Value("${app.jwt.secret}")
-    private String jwtSecret;
+    // @Value("${app.jwt.secret}")
+    private String jwtSecret = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
 
-    @Value("${app.jwt.expiration-ms}")
-    private int jwtExpirationMs;
+    // @Value("${app.jwt.expiration-ms}")
+    private int jwtExpirationMs = 86400000;
 
     public String generateJwtToken(UserDetails userDetails) {
         return Jwts.builder()

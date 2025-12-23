@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Target, CreditCard, TrendingUp, Calculator, AlertCircle } from 'lucide-react';
 import { savingsGoal, debts, investments } from '../data/mockData';
+import { mlApi } from '../services/api';
 
 export default function Goals() {
   const [debtStrategy, setDebtStrategy] = useState<'snowball' | 'avalanche'>('avalanche');
@@ -9,6 +10,24 @@ export default function Goals() {
   const [loanAmount, setLoanAmount] = useState('');
   const [loanRate, setLoanRate] = useState('');
   const [loanTerm, setLoanTerm] = useState('');
+  const [portfolioData, setPortfolioData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      try {
+        const items = investments.map(inv => ({
+          symbol: inv.name,
+          quantity: inv.shares,
+          purchase_price: inv.currentPrice // Using mock current price as purchase price basis
+        }));
+        const res = await mlApi.analyzePortfolio({ items });
+        setPortfolioData(res);
+      } catch (e) {
+        console.error("Portfolio fetch failed", e);
+      }
+    };
+    fetchPortfolio();
+  }, []);
 
   const totalInvestments = investments.reduce((sum, inv) => sum + inv.totalValue, 0);
   const totalDebts = debts.reduce((sum, debt) => sum + debt.balance, 0);
@@ -31,7 +50,7 @@ export default function Goals() {
 
   const getPortfolioAllocation = () => {
     if (riskLevel === 'low') return { stocks: 30, bonds: 60, cash: 10 };
-    if (riskLevel === 'medium' ) return { stocks: 60, bonds: 30, cash: 10 };
+    if (riskLevel === 'medium') return { stocks: 60, bonds: 30, cash: 10 };
     return { stocks: 80, bonds: 15, cash: 5 };
   };
 
@@ -106,20 +125,25 @@ export default function Goals() {
             <div className="flex justify-between items-center">
               <span className="text-gray-700 dark:text-gray-300 font-medium">Total Value</span>
               <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                ₹{totalInvestments.toLocaleString()}
+                ₹{(portfolioData ? portfolioData.total_value : totalInvestments).toLocaleString()}
               </span>
             </div>
             <div className="space-y-2">
-              {investments.map((inv) => (
-                <div key={inv.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              {(portfolioData ? portfolioData.holdings : investments).map((inv: any, index: number) => (
+                <div key={inv.symbol || inv.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{inv.name}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{inv.type}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{inv.symbol || inv.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {inv.quantity ? `${inv.quantity} shares` : inv.type}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-900 dark:text-white">₹{inv.totalValue.toLocaleString()}</p>
-                    <p className={`text-sm font-semibold ${inv.gain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {inv.gain >= 0 ? '+' : ''}{inv.gain}%
+                    <p className="font-bold text-gray-900 dark:text-white">
+                      ₹{(inv.current_val_inr || inv.totalValue).toLocaleString()}
+                    </p>
+                    <p className={`text-sm font-semibold ${(inv.gain_pct ?? inv.gain) >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                      {(inv.gain_pct ?? inv.gain) >= 0 ? '+' : ''}{(inv.gain_pct ?? inv.gain)}%
                     </p>
                   </div>
                 </div>
@@ -134,11 +158,10 @@ export default function Goals() {
                   <button
                     key={level}
                     onClick={() => setRiskLevel(level)}
-                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                      riskLevel === level
-                        ? 'bg-blue-600 text-white shadow-lg'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                    }`}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${riskLevel === level
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      }`}
                   >
                     {level.charAt(0).toUpperCase() + level.slice(1)}
                   </button>
@@ -183,21 +206,19 @@ export default function Goals() {
           <div className="flex gap-2">
             <button
               onClick={() => setDebtStrategy('snowball')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                debtStrategy === 'snowball'
-                  ? 'bg-red-600 text-white shadow-lg'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${debtStrategy === 'snowball'
+                ? 'bg-red-600 text-white shadow-lg'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
             >
               Snowball
             </button>
             <button
               onClick={() => setDebtStrategy('avalanche')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                debtStrategy === 'avalanche'
-                  ? 'bg-red-600 text-white shadow-lg'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${debtStrategy === 'avalanche'
+                ? 'bg-red-600 text-white shadow-lg'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
             >
               Avalanche
             </button>

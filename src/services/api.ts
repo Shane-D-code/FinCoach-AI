@@ -147,4 +147,43 @@ export const healthApi = {
   },
 };
 
+// ML Services
+export const mlApi = {
+  getNearbyDeals: async (latitude: number, longitude: number, radius: number = 5): Promise<any> => {
+    const response = await api.post('/ml/nearby/deals', {
+      latitude,
+      longitude,
+      radius_km: radius
+    });
+    return response.data;
+  },
+
+  simulatePurchase: async (data: { currentBalance: number; monthlyIncome: number; monthlyExpenses: number; purchaseAmount: number }) => {
+    const response = await api.post('/ml/scenario/purchase', data);
+    return response.data;
+  },
+
+  forecastExpenses: async (data: {
+    userId?: number;
+    monthlyIncome: number;
+    currentExpenses: number;
+    category?: string;
+    months?: number;
+  }) => {
+    const response = await api.post('/ml/expense/forecast', data);
+    return response.data;
+  },
+
+  analyzePortfolio: async (data: {
+    items: {
+      symbol: string;
+      quantity: number;
+      purchase_price: number;
+    }[]
+  }) => {
+    const response = await api.post('/ml/market/portfolio', data);
+    return response.data;
+  }
+};
+
 export default api;
