@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+joblib
+pandas
+numpy
+lightgbm
+scikit-learn
+prophet
+requests
+yfinance
+pytesseract
+Pillow
+python-multipart
+opencv-python
+easyocr

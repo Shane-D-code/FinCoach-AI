@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
   Wallet,
   TrendingUp,
   CreditCard,
-  MessageSquare,
   Bell,
   Users,
   Settings,
@@ -15,7 +15,9 @@ import {
   Menu,
   X,
   Search,
-  ShoppingBag
+  ShoppingBag,
+  LogOut,
+  Receipt
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,25 +26,30 @@ const navItems = [
   { path: '/budget', icon: Wallet, label: 'Budget' },
   { path: '/goals', icon: TrendingUp, label: 'Goals' },
   { path: '/lifestyle', icon: ShoppingBag, label: 'Lifestyle' },
-  { path: '/chatbot', icon: MessageSquare, label: 'AI Coach' },
+  { path: '/bill-scanner', icon: Receipt, label: 'Bill Scanner' },
   { path: '/engagement', icon: Users, label: 'Community' },
   { path: '/settings', icon: Settings, label: 'Settings' }
 ];
 
 export default function Layout() {
-  const { theme, toggleTheme, user, isOffline } = useApp();
+  const { theme, toggleTheme } = useApp();
+  const { user, logout, isAuthenticated } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationCount] = useState(3);
 
+  useEffect(() => {
+    // Remove old authentication checks since ProtectedRoute handles this
+  }, [navigate, location.pathname]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      {isOffline && (
-        <div className="bg-yellow-500 text-white px-4 py-2 text-center text-sm font-medium">
-          Offline Mode - Using cached data
-        </div>
-      )}
-
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -58,7 +65,7 @@ export default function Layout() {
                 <TrendingUp className="text-white" size={24} />
               </div>
               <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                FinCoach AI
+                FinCoach
               </span>
             </Link>
           </div>
@@ -94,10 +101,47 @@ export default function Layout() {
                 </span>
               )}
             </Link>
-            <Link to="/settings" className="flex items-center gap-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-              <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
-              <span className="hidden sm:block font-medium dark:text-white">{user.name.split(' ')[0]}</span>
-            </Link>
+            
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:block text-right">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {user.name.split(' ')[0]}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {user.verified ? 'Verified' : 'Unverified'}
+                  </p>
+                </div>
+                <img 
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff`}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full"
+                />
+                <button
+                  onClick={handleLogout}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  aria-label="Logout"
+                  title="Logout"
+                >
+                  <LogOut size={20} className="text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/login"
+                  className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>
