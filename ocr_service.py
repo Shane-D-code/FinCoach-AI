@@ -28,7 +28,6 @@ try:
     print("✅ HelloOCR model loaded successfully")
     MODEL_LOADED = True
 except Exception as e:
-    print(f"⚠️ Warning: Could not load HelloOCR model: {e}")
     ocr_model = None
     MODEL_LOADED = False
 

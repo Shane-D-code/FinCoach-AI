@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Target, CreditCard, TrendingUp, Calculator, AlertCircle } from 'lucide-react';
+import { Target, TrendingUp, Calculator, AlertCircle } from 'lucide-react';
 import { savingsGoal, debts, investments } from '../data/mockData';
 import { mlApi } from '../services/api';
+import DebtDashboard from '../components/DebtDashboard';
 
 export default function Goals() {
-  const [debtStrategy, setDebtStrategy] = useState<'snowball' | 'avalanche'>('avalanche');
   const [riskLevel, setRiskLevel] = useState<'low' | 'medium' | 'high'>('medium');
   const [loanAmount, setLoanAmount] = useState('');
   const [loanRate, setLoanRate] = useState('');
@@ -30,11 +30,6 @@ export default function Goals() {
   }, []);
 
   const totalInvestments = investments.reduce((sum, inv) => sum + inv.totalValue, 0);
-  const totalDebts = debts.reduce((sum, debt) => sum + debt.balance, 0);
-
-  const sortedDebts = [...debts].sort((a, b) =>
-    debtStrategy === 'avalanche' ? b.interestRate - a.interestRate : a.balance - b.balance
-  );
 
   const calculateLoanPayment = () => {
     if (!loanAmount || !loanRate || !loanTerm) return null;
@@ -189,72 +184,14 @@ export default function Goals() {
         </motion.div>
       </div>
 
+      {/* Enhanced Debt Dashboard */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg mb-8"
+        className="mb-8"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-red-100 dark:bg-red-900 rounded-xl">
-            <CreditCard className="text-red-600" size={24} />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Debt Management</h3>
-            <p className="text-gray-600 dark:text-gray-400">Total Debt: ₹{totalDebts.toLocaleString()}</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setDebtStrategy('snowball')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${debtStrategy === 'snowball'
-                ? 'bg-red-600 text-white shadow-lg'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
-            >
-              Snowball
-            </button>
-            <button
-              onClick={() => setDebtStrategy('avalanche')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${debtStrategy === 'avalanche'
-                ? 'bg-red-600 text-white shadow-lg'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
-            >
-              Avalanche
-            </button>
-          </div>
-        </div>
-        <div className="space-y-3">
-          {sortedDebts.map((debt, index) => (
-            <motion.div
-              key={debt.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 * index }}
-              className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-red-500"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h4 className="font-bold text-gray-900 dark:text-white">
-                    {index === 0 && '🎯 '}{debt.name}
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Interest Rate: {debt.interestRate}% | Min Payment: ₹{debt.minPayment}
-                  </p>
-                </div>
-                <span className="text-lg font-bold text-red-600">₹{debt.balance.toLocaleString()}</span>
-              </div>
-              {index === 0 && (
-                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    <strong>Priority:</strong> Pay this debt first. Adding ₹200/month extra could eliminate it in{' '}
-                    {Math.ceil(debt.balance / (debt.minPayment + 200))} months.
-                  </p>
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
+        <DebtDashboard />
       </motion.div>
 
       <motion.div
@@ -335,3 +272,4 @@ export default function Goals() {
     </div>
   );
 }
+

@@ -18,7 +18,6 @@ try:
     else:
         model = artifact
 except Exception:
-    print("Warning: Could not load model pickle. Proceeding with fallback logic.")
     model = None
 
 # ===============================

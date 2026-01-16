@@ -64,12 +64,33 @@ CREATE TABLE debts (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
-    balance DECIMAL(10,2) NOT NULL,
+    balance DECIMAL(15,2) NOT NULL,
     interest_rate DECIMAL(5,2) NOT NULL,
     min_payment DECIMAL(10,2) NOT NULL,
-    type VARCHAR(20) NOT NULL CHECK (type IN ('credit', 'loan', 'student', 'mortgage')),
+    type VARCHAR(20) NOT NULL CHECK (type IN ('credit', 'loan', 'student', 'mortgage', 'auto', 'medical', 'other')),
+    original_balance DECIMAL(15,2),
+    is_active BOOLEAN DEFAULT TRUE,
+    notes TEXT,
+    due_day INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Debt Payments table
+CREATE TABLE debt_payments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    debt_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    balance_before DECIMAL(15,2),
+    balance_after DECIMAL(15,2),
+    interest_paid DECIMAL(10,2),
+    principal_paid DECIMAL(10,2),
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payment_method VARCHAR(50),
+    notes TEXT,
+    is_automatic BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Savings Goals table
@@ -120,6 +141,13 @@ CREATE INDEX idx_investments_type ON investments(type);
 
 CREATE INDEX idx_debts_user_id ON debts(user_id);
 CREATE INDEX idx_debts_type ON debts(type);
+CREATE INDEX idx_debts_user_active ON debts(user_id, is_active);
+
+CREATE INDEX idx_debt_payments_debt_id ON debt_payments(debt_id);
+CREATE INDEX idx_debt_payments_user_id ON debt_payments(user_id);
+CREATE INDEX idx_debt_payments_date ON debt_payments(payment_date);
+CREATE INDEX idx_debt_payments_debt_date ON debt_payments(debt_id, payment_date);
+CREATE INDEX idx_debt_payments_user_date ON debt_payments(user_id, payment_date);
 
 CREATE INDEX idx_savings_goals_user_id ON savings_goals(user_id);
 
