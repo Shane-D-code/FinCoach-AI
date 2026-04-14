@@ -1,4 +1,4 @@
-import api from './api';
+import api, { tokenManager } from './api';
 
 // Storage keys
 const STORAGE_KEY = 'fincoach_debts';
@@ -141,7 +141,7 @@ class DebtService {
   private subscribers: ((debts: Debt[]) => void)[] = [];
   private paymentSubscribers: ((payments: DebtPayment[]) => void)[] = [];
   private nextId = 1;
-  private updateInterval: NodeJS.Timeout | null = null;
+  private updateInterval: number | null = null;
   private isOnline = navigator.onLine;
 
   constructor() {
@@ -328,6 +328,12 @@ class DebtService {
   // ==================== CRUD Operations ====================
 
   async getDebts(): Promise<Debt[]> {
+    // Don't fetch on public pages without token
+    if (!tokenManager.isTokenValid()) {
+      console.log('No valid token, skipping debts fetch');
+      return [];
+    }
+
     if (this.isOnline) {
       try {
         const response = await api.get('/debts');
@@ -912,7 +918,7 @@ class DebtService {
       },
       savings: {
         interestSaved: parseFloat(apiComparison.savings?.interestSaved || 0),
-        timeSavedMonths: apiComparison.savings?.timeSavedMonths || 0,
+        timeSavedMonths: apiComparison.savings?.timeSaved || apiComparison.savings?.timeSavedMonths || 0,
         recommendation: apiComparison.savings?.recommendation || ''
       }
     };

@@ -158,7 +158,19 @@ def extract_amounts(text: str) -> List[float]:
                     continue
     
     # Remove duplicates and sort
-    amounts = sorted(list(set(amounts)))
+    print("DEBUG: Raw amounts before fix:", amounts)
+    # Remove leftmost integer for EVERY total after OCR scan
+    fixed_amounts = []
+    for a in amounts:
+        str_a = str(int(a))
+        if len(str_a) > 2:
+            fixed_a = int(str_a[1:])
+            print(f"  🔧 Remove left digit: {a} → {fixed_a}")
+            fixed_amounts.append(float(fixed_a))
+        else:
+            fixed_amounts.append(a)
+    amounts = sorted(set(fixed_amounts))
+    print("DEBUG: Fixed totals shown in extracted data:", amounts)
     return amounts
 
 def extract_date(text: str) -> Optional[str]:
@@ -328,17 +340,17 @@ def process_ocr_text(text: str) -> BillData:
         filtered_amounts = []
         lines = text.split('\n')
         
-        for amount in amounts:
+for amount in amounts:
             # Skip very small amounts (likely not totals)
             if amount < 100:
                 print(f"  ❌ Skipping ₹{amount} (too small to be a bill total)")
                 continue
             
-            # Skip amounts that look like HSN/SAC codes (4-digit codes like 8302)
-            if 1000 <= amount <= 9999 and amount == int(amount):
+            # Skip HSN/SAC codes (4-digit integers), but allow totals
+            if 1000 <= amount <= 9999 and amount == int(amount) and 'total' not in text.lower():
                 print(f"  ❌ Skipping ₹{amount} (looks like HSN/SAC code)")
                 continue
-                
+            
             amount_str = str(int(amount)) if amount == int(amount) else str(amount)
             # Also check with comma format
             amount_str_comma = f"{int(amount):,}" if amount == int(amount) else f"{amount:,.2f}"

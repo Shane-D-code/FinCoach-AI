@@ -210,10 +210,7 @@ export default function Register() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
 
-  // Debug re-renders temporarily
-  const renderCountRef = useRef(0);
-  renderCountRef.current += 1;
-  console.log(`Register render #${renderCountRef.current}`);
+// Render diagnostics removed (was causing log spam)
 
   // Memoized password strength
   const passwordStrength = useMemo(

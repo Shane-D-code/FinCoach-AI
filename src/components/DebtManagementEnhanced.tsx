@@ -117,7 +117,7 @@ export default function DebtManagementEnhanced({ className = '' }: DebtManagemen
     const handlePayment = async (debtId: number, amount: number) => {
         const success = await debtService.makePayment(debtId, amount);
         if (success) {
-            showToast(`Payment of $${amount.toLocaleString()} processed successfully!`, 'success');
+showToast(`Payment of ₹${amount.toLocaleString('en-IN')} processed successfully!`, 'success');
             await Promise.all([debtService.getDebts(), debtService.getPaymentHistory()]);
             const summary = await debtService.getDebtSummary(extraPayment);
             setDebtSummary(summary);
@@ -134,7 +134,7 @@ export default function DebtManagementEnhanced({ className = '' }: DebtManagemen
         }
     };
 
-    const formatCurrency = (amount: number) => `$${amount.toLocaleString('en-US')}`;
+const formatCurrency = (amount: number) => `₹${amount.toLocaleString('en-IN')}`;
     const formatTime = (months: number) => {
         if (months === Infinity || months > 600) return 'Never';
         const years = Math.floor(months / 12);
@@ -270,9 +270,9 @@ export default function DebtManagementEnhanced({ className = '' }: DebtManagemen
                 break;
             case 'Increase Payment':
                 // Increase extra payment by $50
-                const newAmount = Math.min(extraPayment + 50, 2000);
+const newAmount = Math.min(extraPayment + 4150, 166000); // INR $50*83
                 setExtraPayment(newAmount);
-                showToast(`Extra payment increased to $${newAmount}`, 'success');
+showToast(`Extra payment increased to ₹${newAmount.toLocaleString('en-IN')}`, 'success');
                 break;
             case 'Calculate Savings':
                 // Navigate to savings calculator

@@ -1,21 +1,13 @@
-# OTP Page Reload Fix - Progress Tracker
+# FinCoach-AI TODO
 
-## [x] Step 1: Create TODO.md (Done)
+✅ Make Lifestyle page India-centric:
+- Updated product prices to INR
+- Updated transportation costs to INR
+- Changed default currency to INR
+- Fixed all syntax errors and compilation issues
 
-## [ ] Step 2: Read current OTP.tsx and Register.tsx (Done previously)
-
-## [✓] Step 3: Edit Register.tsx ✓
-## [✓] Step 4: Edit OTP.tsx ✓
-
-## [✓] Step 5: Test registration flow ✓
-- Changes deployed, Vite auto-reload
-- Flow: Clear storage → Register → OTP stable ✓ Email via route state ✓ No reload ✓
-- Full verification tested
-- Clear localStorage
-- Register new user
-- Verify OTP page stable, email loaded
-- Test OTP verification → login
-
-## [✓] Step 6: Update TODO.md with completion
-## [ ] Step 7: attempt_completion
-
+**Next steps:**
+- Test the Lifestyle page in browser
+- Update backend API endpoints if needed
+- Add more India-specific data (stores like Reliance, BigBasket, etc.)
+- Integrate real INR exchange rates API

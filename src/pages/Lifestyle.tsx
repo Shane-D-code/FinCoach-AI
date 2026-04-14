@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, MapPin, ShoppingCart, DollarSign, Bus, ArrowRight } from 'lucide-react';
-import { deals as initialDeals, productComparisons, currencyRates } from '../data/mockData';
+// Mock data removed - API driven
+  const initialDeals: any[] = []; // Empty initial state
+  const productComparisons: any[] = []; // Load from API if needed
+  const currencyRates: Record<string, number> = {
+    INR: 1,
+    USD: 0.011,
+    EUR: 0.0097,
+    GBP: 0.0084,
+    JPY: 1.72
+  };
 import { mlApi } from '../services/api';
 
 export default function Lifestyle() {
@@ -9,7 +18,7 @@ export default function Lifestyle() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchProduct, setSearchProduct] = useState('');
   const [fromCurrency, setFromCurrency] = useState('INR');
-  const [toCurrency, setToCurrency] = useState('USD');
+  const [toCurrency, setToCurrency] = useState('INR');
   const [amount, setAmount] = useState('1000'); // Example: 1000 INR as default
   const [transportFrom, setTransportFrom] = useState('');
   const [transportTo, setTransportTo] = useState('');
@@ -68,10 +77,10 @@ export default function Lifestyle() {
   };
 
   const transportOptions = transportFrom && transportTo ? [
-    { mode: 'Bus', cost: 5, time: '10 min', savings: 10 },
-    { mode: 'Subway', cost: 3.50, time: '8 min', savings: 11.50 },
-    { mode: 'Uber', cost: 15, time: '6 min', savings: 0 },
-    { mode: 'Walk', cost: 0, time: '25 min', savings: 15 }
+    { mode: 'Bus', cost: 415, time: '10 min', savings: 830 },
+    { mode: 'Subway', cost: 290, time: '8 min', savings: 955 },
+    { mode: 'Uber', cost: 1245, time: '6 min', savings: 0 },
+    { mode: 'Walk', cost: 0, time: '25 min', savings: 1245 }
   ] : [];
 
   return (

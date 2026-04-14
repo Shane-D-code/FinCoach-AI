@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Doughnut, Line } from 'react-chartjs-2';
@@ -14,7 +15,9 @@ import {
 } from 'chart.js';
 import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, Award, Plus, X, Shield } from 'lucide-react';
 import DailySpend from '../components/DailySpend';
+import BankStatementUploadModal from '../components/BankStatementUploadModal';
 import { mlApi } from '../services/api';
+import { FileText } from 'lucide-react';
 
 ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -38,6 +41,7 @@ export default function Dashboard() {
   const [transactionForm, setTransactionForm] = useState({ amount: '', category: '', date: '' });
   const [riskAssessment, setRiskAssessment] = useState<{ risk_score: number; risk_label: string } | null>(null);
   const [loadingRisk, setLoadingRisk] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('userProfile');
@@ -49,23 +53,16 @@ export default function Dashboard() {
       setDailySpends(JSON.parse(storedDaily));
     } else {
       // Add mock data for demonstration
-      const mockData: DailySpendEntry[] = [
-        { date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 1500, category: 'Food' },
-        { date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 800, category: 'Transport' },
-        { date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 2000, category: 'Shopping' },
-        { date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 1200, category: 'Entertainment' },
-        { date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 600, category: 'Bills & Utilities' },
-        { date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 900, category: 'Healthcare' },
-      ];
-      setDailySpends(mockData);
-      localStorage.setItem('dailySpends', JSON.stringify(mockData));
+      // Mock data removed - use real API data or empty
+      const emptyData: DailySpendEntry[] = [];
+      setDailySpends(emptyData);
     }
     const storedYearly = localStorage.getItem('yearlySpend');
     if (storedYearly) {
       setYearlySpend(parseFloat(storedYearly));
     } else {
-      setYearlySpend(600000); // Mock yearly spend
-      localStorage.setItem('yearlySpend', '600000');
+      setYearlySpend(0); // Use real data or 0
+      localStorage.setItem('yearlySpend', '0');
     }
   }, []);
 
@@ -409,14 +406,39 @@ export default function Dashboard() {
 
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Quick Actions</h2>
-        <button
-          onClick={() => setShowAddTransaction(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all"
-        >
-          <Plus size={20} />
-          <span>Add Transaction</span>
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowAddTransaction(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all"
+          >
+            <Plus size={20} />
+            <span>Add Transaction</span>
+          </button>
+          <button
+            onClick={() => setShowBankModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:shadow-lg transition-all"
+          >
+            <FileText size={20} />
+            <span>Bank Statement</span>
+          </button>
+        </div>
       </div>
+
+      <BankStatementUploadModal
+        isOpen={showBankModal}
+        onClose={() => setShowBankModal(false)}
+        onSaveTransactions={(transactions) => {
+          // Save to dailySpends state
+          const updatedSpends = [...dailySpends, ...transactions.map(t => ({
+            date: t.date,
+            amount: t.amount,
+            category: t.category
+          }))];
+          setDailySpends(updatedSpends);
+          localStorage.setItem('dailySpends', JSON.stringify(updatedSpends));
+          console.log(`${transactions.length} transactions imported!`);
+        }}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <motion.div

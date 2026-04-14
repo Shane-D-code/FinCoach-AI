@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:8081/api';
 
 // Create axios instance
 const api = axios.create({
@@ -204,7 +204,17 @@ export const mlApi = {
     return response.data;
   },
 
-  // OCR Services (Mock implementation in backend)
+  // OCR Services
+  analyzeBankStatement: async (formData: FormData) => {
+    const response = await api.post('/ml/bank/analyze', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data as BankAnalysisResponse;
+  },
+
+  // Existing OCR
   scanBill: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);

@@ -270,13 +270,13 @@ export default function BillScanner() {
                 )}
 
                 <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <DollarSign className="text-blue-600 dark:text-blue-400" size={20} />
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Amount</p>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      ₹{ocrResult.bill_data.total_amount.toFixed(2)}
-                    </p>
-                  </div>
+                <DollarSign className="text-blue-600 dark:text-blue-400" size={20} />
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Amount</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    ₹{ocrResult.bill_data!.total_amount.toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 2})}
+                  </p>
+                </div>
                 </div>
 
                 {ocrResult.bill_data.tax && (

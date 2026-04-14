@@ -3,8 +3,8 @@ export const userData = {
   email: 'alex.doe@example.com',
   avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
   incomeType: 'gig',
-  monthlyIncome: 3000,
-  currentBalance: 3200,
+  monthlyIncome: 249000,  // ~$3000 USD *83
+  currentBalance: 265600,  // ~$3200
   streak: 7,
   badges: ['Saver', 'Budgeter', 'Investor'],
   language: 'en',
@@ -87,8 +87,6 @@ export const deals = [
   { id: 3, store: 'Target', discount: '15% off household items', location: 'Westside Mall', distance: '2.3 mi' }
 ];
 
-
-
 export const leaderboard = [
   { rank: 1, name: 'You (Alex)', streak: 7, savings: 2000 },
   { rank: 2, name: 'Anonymous User', streak: 12, savings: 3500 },
@@ -98,9 +96,10 @@ export const leaderboard = [
 ];
 
 export const productComparisons = [
-  { product: 'iPhone 15', amazon: 799, flipkart: 829, bestbuy: 799, cashback: '5%' },
-  { product: 'Samsung TV 55"', amazon: 599, flipkart: 649, bestbuy: 579, cashback: '3%' },
-  { product: 'Laptop Dell XPS', amazon: 1299, flipkart: 1350, bestbuy: 1249, cashback: '2%' }
+  // INR data
+  { product: 'iPhone 15', amazon: 66317, flipkart: 68787, bestbuy: 66317, cashback: '5%' },
+  { product: 'Samsung TV 55"', amazon: 49657, flipkart: 53867, bestbuy: 48053, cashback: '3%' },
+  { product: 'Laptop Dell XPS', amazon: 107777, flipkart: 112050, bestbuy: 103667, cashback: '2%' }
 ];
 
 export const currencyRates: Record<string, number> = {
@@ -110,3 +109,4 @@ export const currencyRates: Record<string, number> = {
   GBP: 0.0084,   // 1 GBP ≈ 105 INR
   JPY: 1.72   // 1 JPY ≈ 0.56 INR
 };
+
