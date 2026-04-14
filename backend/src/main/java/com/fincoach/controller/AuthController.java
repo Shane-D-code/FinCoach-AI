@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,15 +19,21 @@ public class AuthController {
     AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) throws Exception {
         authService.registerUser(signUpRequest);
-        return ResponseEntity.ok().body("User registered successfully. Check email for OTP.");
+        return ResponseEntity.ok().body("User registered successfully. Check email/console for OTP.");
     }
 
     @PostMapping("/verify-email-otp")
     public ResponseEntity<?> verifyEmailOtp(@RequestBody OtpVerificationRequest request) {
         authService.verifyEmailOtp(request);
         return ResponseEntity.ok().body("Email verified successfully!");
+    }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<?> resendOtp(@RequestParam String email) throws Exception {
+        authService.resendOtp(email);
+        return ResponseEntity.ok().body("New OTP sent successfully. Check your email/console!");
     }
 
     @PostMapping("/login")

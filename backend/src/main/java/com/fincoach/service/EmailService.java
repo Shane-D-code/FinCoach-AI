@@ -11,7 +11,7 @@ public class EmailService {
     @Autowired
     private JavaMailSender javaMailSender;
 
-    public void sendEmail(String to, String subject, String body) {
+    public void sendEmail(String to, String subject, String body) throws Exception {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("noreply@fincoach.com");
@@ -21,10 +21,10 @@ public class EmailService {
             javaMailSender.send(message);
             System.out.println("✅ Email sent successfully to: " + to);
         } catch (Exception e) {
-            System.err.println("❌ Failed to send email to " + to);
-            System.err.println("Error: " + e.getMessage());
-            // Log the error but don't throw exception
-            // This allows registration to complete even if email fails
+            System.err.println("❌ FAILED TO SEND OTP EMAIL to " + to);
+            System.err.println("Error details: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Email sending failed: " + e.getMessage(), e);
         }
     }
 }

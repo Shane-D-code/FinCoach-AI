@@ -91,7 +91,11 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       tokenManager.removeToken();
-      window.location.href = '/login';
+      const pathname = window.location.pathname;
+      if (!['/', '/register', '/login', '/verify-otp'].includes(pathname)) {
+        window.location.href = '/login';
+      }
+      console.log(`401 ignored on public route: ${pathname}`);
     }
     return Promise.reject(error);
   }

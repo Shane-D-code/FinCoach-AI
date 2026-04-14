@@ -19,7 +19,7 @@ import ExpenseForecast from './pages/ExpenseForecast';
 import BillScanner from './pages/BillScanner';
 
 function App() {
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = import.meta.env.DEV;
 
   return (
     <AuthProvider>

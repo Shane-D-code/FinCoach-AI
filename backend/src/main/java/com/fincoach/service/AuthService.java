@@ -41,7 +41,7 @@ public class AuthService {
     EmailService emailService;
 
     @Transactional
-    public void registerUser(SignupRequest signUpRequest) {
+    public void registerUser(SignupRequest signUpRequest) throws Exception {
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             throw new RuntimeException("Error: Email is already in use!");
         }
@@ -75,15 +75,17 @@ public class AuthService {
                 "If you did not request this, please ignore this email.\n\n" +
                 "Best regards,\nFinCoach Team";
 
-        try {
-            emailService.sendEmail(user.getEmail(), "FinCoach Email Verification OTP", emailBody);
-            System.out.println("✅ OTP sent successfully to: " + user.getEmail());
-        } catch (Exception e) {
-            System.err.println("⚠️ Failed to send email, but user registered. OTP: " + otp);
-            System.err.println("User can retrieve OTP from database or use manual verification");
-            // Don't throw exception - allow registration to complete
-            // User can still verify using OTP from database
-        }
+        // PROMINENT OTP DISPLAY FOR DEVELOPMENT
+        System.out.println("\\n🚨🚨🚨  NEW REGISTRATION - OTP REQUIRED  🚨🚨🚨");
+        System.out.println("👤 User: " + user.getEmail());
+        System.out.println("🔑 OTP CODE:  *** " + otp + " ***  (5 min expiry)");
+        System.out.println("💾 Stored in email_otp table");
+        System.out.println("📧 Attempting email send...");
+        
+        emailService.sendEmail(user.getEmail(), "FinCoach Email Verification OTP", emailBody);
+        
+        System.out.println("✅ OTP email sent successfully to: " + user.getEmail());
+        System.out.println("✅✅✅ REGISTRATION COMPLETE ✅✅✅\\n");
     }
 
     @Transactional
@@ -105,6 +107,37 @@ public class AuthService {
         user.setVerified(true);
         userRepository.save(user);
         emailOtpRepository.delete(emailOtp);
+    }
+
+    public void resendOtp(String email) throws Exception {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+        
+        // Delete existing OTPs
+        emailOtpRepository.deleteByUser(user);
+        
+        // Generate new OTP
+        String newOtp = RandomStringUtils.randomNumeric(6);
+        EmailOtp newEmailOtp = EmailOtp.builder()
+                .user(user)
+                .otp(newOtp)
+                .expiryTime(LocalDateTime.now().plusMinutes(5))
+                .build();
+        emailOtpRepository.save(newEmailOtp);
+        
+        // Prominent console display
+        System.out.println("\\n🔄 RESEND REQUEST for: " + email);
+        System.out.println("🔑 NEW OTP: || " + newOtp + " || (5 min expiry)");
+        System.out.println("📧 Sending email...");
+        
+        String emailBody = "Dear " + user.getName() + ",\n\n" +
+                "A new verification OTP has been requested for your FinCoach account.\n\n" +
+                "Your new OTP is: " + newOtp + "\n\n" +
+                "This expires in 5 minutes.\n\n" +
+                "Best,\nFinCoach Team";
+        
+        emailService.sendEmail(email, "FinCoach: New Verification OTP", emailBody);
+        System.out.println("✅ Resend complete for: " + email + "\\n");
     }
 
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
